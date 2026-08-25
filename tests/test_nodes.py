@@ -35,13 +35,18 @@ def test_tool_node_error_simulation() -> None:
         "route": "error",
         "attempt": 0,
         "max_attempts": 3,
+        "thread_id": "thread-test",
         "messages": [],
         "tool_results": [],
         "errors": [],
         "events": [],
     }
     result = tool_node(state)
-    assert "ERROR" in result["tool_results"][0]
+    # New error model: errors land in tool_error + error_type, not tool_results
+    assert result["tool_error"] is not None, "tool_error should be set on failure"
+    assert result["error_type"] == "timeout", f"Expected timeout, got {result.get('error_type')}"
+    assert result["retryable"] is True, "timeout should be retryable"
+    assert result["tool_results"] == [], "tool_results should be empty on error"
     assert len(result["events"]) == 1
     assert result["events"][0]["node"] == "tool"
 
@@ -66,6 +71,8 @@ def test_evaluate_node_needs_retry() -> None:
     state: AgentState = {
         "query": "Timeout error",
         "tool_results": ["ERROR: Service timeout occurred"],
+        "tool_error": None,
+        "retryable": None,
         "events": [],
     }
     result = evaluate_node(state)
@@ -73,10 +80,26 @@ def test_evaluate_node_needs_retry() -> None:
     assert result["events"][0]["node"] == "evaluate"
 
 
+def test_evaluate_node_failed_permanently() -> None:
+    """Non-retryable errors (retryable=False) should yield failed_permanently."""
+    state: AgentState = {
+        "query": "Delete account",
+        "tool_results": [],
+        "tool_error": "[unauthorized] Authentication failed.",
+        "retryable": False,
+        "error_type": "unauthorized",
+        "events": [],
+    }
+    result = evaluate_node(state)
+    assert result["evaluation_result"] == "failed_permanently"
+
+
 def test_evaluate_node_success() -> None:
     state: AgentState = {
         "query": "Order 123",
         "tool_results": ["SUCCESS: Order 123 is delivered"],
+        "tool_error": None,
+        "retryable": None,
         "events": [],
     }
     result = evaluate_node(state)

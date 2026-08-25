@@ -41,23 +41,49 @@ class ApprovalDecision(BaseModel):
 class AgentState(TypedDict, total=False):
     """LangGraph state.
 
-    State fields:
-    - Overwritten fields: scalar/singular state variables (route, attempt, evaluation_result, etc.)
-    - Append-only fields: audit logs, messages, tool outputs, errors, events.
+    Overwrite fields: scalars that change per step (route, attempt, evaluation_result, …)
+    Append-only fields: audit lists accumulate across nodes (messages, tool_results, errors, events)
     """
 
+    # ── Conversation ──────────────────────────────────────────────
     thread_id: str
     scenario_id: str
     query: str
+
+    # ── Classification ───────────────────────────────────────────
     route: str
     risk_level: str
+
+    # ── Retry ────────────────────────────────────────────────────
     attempt: int
     max_attempts: int
+
+    # ── Response ─────────────────────────────────────────────────
     final_answer: str | None
     evaluation_result: str
     pending_question: str | None
     proposed_action: str | None
     approval: dict[str, Any] | ApprovalDecision | None
+
+    # ── Error Model (P1-P2) ───────────────────────────────────────
+    # tool_error: last exception message (raw, from tool_node try/except)
+    tool_error: str | None
+    # error_type: normalized category — 'timeout', 'rate_limit', 'unauthorized', 'not_found', …
+    error_type: str | None
+    # retryable: True = transient (retry); False = permanent (dead_letter immediately)
+    retryable: bool | None
+    # internal_error: raw repr for audit only — NEVER shown to user
+    internal_error: str | None
+    # safe_error: user-facing message — no stack trace / credentials
+    safe_error: str | None
+
+    # ── HITL Safety (P4-P5) ──────────────────────────────────────
+    # action_id: UUID per risky action — key for idempotency
+    action_id: str | None
+    # idempotency_key: '{thread_id}:{action_id}' — prevents double execution on retry
+    idempotency_key: str | None
+
+    # ── Append-only audit lists ───────────────────────────────────
     messages: Annotated[list[str], add]
     tool_results: Annotated[list[str], add]
     errors: Annotated[list[str], add]
@@ -96,6 +122,16 @@ def initial_state(scenario: Scenario) -> AgentState:
         "pending_question": None,
         "proposed_action": None,
         "approval": None,
+        # Error model
+        "tool_error": None,
+        "error_type": None,
+        "retryable": None,
+        "internal_error": None,
+        "safe_error": None,
+        # HITL safety
+        "action_id": None,
+        "idempotency_key": None,
+        # Audit lists
         "messages": [],
         "tool_results": [],
         "errors": [],
