@@ -1,8 +1,8 @@
 {
   "total_scenarios": 7,
   "success_rate": 1.0,
-  "avg_nodes_visited": 6.571428571428571,
-  "total_retries": 4,
+  "avg_nodes_visited": 7.571428571428571,
+  "total_retries": 7,
   "total_interrupts": 2,
   "resume_success": false,
   "scenario_metrics": [
@@ -50,13 +50,17 @@
       "success": true,
       "expected_route": "risky",
       "actual_route": "risky",
-      "nodes_visited": 8,
-      "retry_count": 0,
+      "nodes_visited": 15,
+      "retry_count": 3,
       "interrupt_count": 1,
       "approval_required": true,
       "approval_observed": true,
       "latency_ms": 0,
-      "errors": []
+      "errors": [
+        "Attempt 1 failed [None]: transient error, retrying in 0.2s",
+        "Attempt 2 failed [None]: transient error, retrying in 0.5s",
+        "Attempt 3 failed [None]: transient error, retrying in 1.0s"
+      ]
     },
     {
       "scenario_id": "S05_error",
@@ -104,5 +108,88 @@
         "Attempt 1 failed [None]: transient error, retrying in 0.2s"
       ]
     }
-  ]
+  ],
+  "scenarios_detail": [
+    {
+      "id": "S01_simple",
+      "query": "How do I reset my password?",
+      "expected_route": "simple",
+      "actual_route": "simple",
+      "passed": true,
+      "attempt": 0,
+      "has_answer": true,
+      "events_count": 4,
+      "final_answer": "Hello! I would be happy to help you reset your password.\n\nTo reset your password, please follow these simple steps:\n\n1. ..."
+    },
+    {
+      "id": "S02_tool",
+      "query": "Please lookup order status for order 12345",
+      "expected_route": "tool",
+      "actual_route": "tool",
+      "passed": true,
+      "attempt": 0,
+      "has_answer": true,
+      "events_count": 6,
+      "final_answer": "Hello! Thank you for reaching out.\n\nI have looked into your request, and I am happy to confirm that your order #12345 is..."
+    },
+    {
+      "id": "S03_missing",
+      "query": "Can you fix it?",
+      "expected_route": "missing_info",
+      "actual_route": "missing_info",
+      "passed": true,
+      "attempt": 0,
+      "has_answer": true,
+      "events_count": 4,
+      "final_answer": "We need a bit more information to help you with: 'Can you fix it?'. Could you please provide specific details such as yo..."
+    },
+    {
+      "id": "S04_risky",
+      "query": "Refund this customer and send confirmation email",
+      "expected_route": "risky",
+      "actual_route": "risky",
+      "passed": true,
+      "attempt": 3,
+      "has_answer": true,
+      "events_count": 15,
+      "final_answer": "We were unable to complete your request: 'Refund this customer and send confirmation email' after 3 attempts. Your ticke..."
+    },
+    {
+      "id": "S05_error",
+      "query": "Timeout failure while processing request",
+      "expected_route": "error",
+      "actual_route": "error",
+      "passed": true,
+      "attempt": 3,
+      "has_answer": true,
+      "events_count": 11,
+      "final_answer": "We were unable to complete your request: 'Timeout failure while processing request' after 3 attempts. Your ticket has be..."
+    },
+    {
+      "id": "S06_delete",
+      "query": "Delete customer account after support verification",
+      "expected_route": "risky",
+      "actual_route": "risky",
+      "passed": true,
+      "attempt": 0,
+      "has_answer": true,
+      "events_count": 8,
+      "final_answer": "Hello,\n\nThank you for reaching out to us.\n\nI am writing to confirm that your request to delete your account has been suc..."
+    },
+    {
+      "id": "S07_dead_letter",
+      "query": "System failure cannot recover after multiple attempts",
+      "expected_route": "error",
+      "actual_route": "error",
+      "passed": true,
+      "attempt": 1,
+      "has_answer": true,
+      "events_count": 5,
+      "final_answer": "We were unable to complete your request: 'System failure cannot recover after multiple attempts' after 1 attempts. Your ..."
+    }
+  ],
+  "passed_scenarios": 7,
+  "routing_accuracy": 1.0,
+  "bounded_retry_verified": true,
+  "hitl_verified": true
 }

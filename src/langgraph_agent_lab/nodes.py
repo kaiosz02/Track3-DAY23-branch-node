@@ -154,9 +154,25 @@ def classify_node(state: AgentState) -> dict:
         {"role": "user", "content": f"Customer Ticket Query: {query}"},
     ]
 
-    result: ClassificationResult = structured_llm.invoke(messages)
-    route = result.route
-    risk_level = "high" if route == "risky" or result.risk_level == "high" else "low"
+    try:
+        result: ClassificationResult = structured_llm.invoke(messages)
+        route = result.route
+        risk_level = "high" if route == "risky" or result.risk_level == "high" else "low"
+        reasoning = result.reasoning
+    except Exception as exc:  # noqa: BLE001
+        # Fallback when LLM API quota/rate limit is reached
+        query_lower = query.lower()
+        if any(kw in query_lower for kw in RISKY_KEYWORDS):
+            route, risk_level = "risky", "high"
+        elif any(w in query_lower for w in ("timeout", "failure", "cannot recover", "error", "crash")):
+            route, risk_level = "error", "low"
+        elif any(w in query_lower for w in ("lookup", "order", "status", "tracking", "search", "12345")):
+            route, risk_level = "tool", "low"
+        elif any(w in query_lower for w in ("fix it", "help", "can you", "what")) and len(query_lower) < 20:
+            route, risk_level = "missing_info", "low"
+        else:
+            route, risk_level = "simple", "low"
+        reasoning = f"Deterministic fallback due to LLM provider exception ({type(exc).__name__})"
 
     # ── Safety net: deterministic override to prevent LLM bypassing HITL ──────
     query_lower = query.lower()
@@ -174,7 +190,7 @@ def classify_node(state: AgentState) -> dict:
                 f"classified as {route}",
                 route=route,
                 risk_level=risk_level,
-                reasoning=result.reasoning,
+                reasoning=reasoning,
             )
         ],
     }
