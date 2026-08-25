@@ -25,9 +25,17 @@ def run_scenarios(
     output: Annotated[Path, typer.Option("--output")],
 ) -> None:
     """Run all grading scenarios and write metrics JSON."""
+    import os
+    from dotenv import load_dotenv
+    load_dotenv()  # ensure .env is loaded before reading DATABASE_URL
+
     cfg = yaml.safe_load(config.read_text(encoding="utf-8"))
     scenarios = load_scenarios(cfg["scenarios_path"])
-    checkpointer = build_checkpointer(cfg.get("checkpointer", "memory"), cfg.get("database_url"))
+
+    # database_url: yaml takes precedence, fallback to OS env var (set in .env)
+    db_url = cfg.get("database_url") or os.getenv("DATABASE_URL")
+    checkpointer_kind = cfg.get("checkpointer", os.getenv("CHECKPOINTER", "memory"))
+    checkpointer = build_checkpointer(checkpointer_kind, db_url)
     graph = build_graph(checkpointer=checkpointer)
     metrics = []
     for scenario in scenarios:
