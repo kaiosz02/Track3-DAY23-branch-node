@@ -1,54 +1,4 @@
-"""Report generation helper.
-
-Renders a complete Markdown lab report from MetricsReport data,
-following the structure in reports/lab_report_template.md.
-"""
-
-from __future__ import annotations
-
-from pathlib import Path
-
-from .metrics import MetricsReport
-
-
-def render_report(metrics: MetricsReport) -> str:
-    """Render a complete lab report from metrics data.
-
-    Generates a report that includes:
-    1. Metrics summary table (total scenarios, success rate, retries, interrupts)
-    2. Per-scenario results table
-    3. Architecture explanation
-    4. Failure analysis (two failure modes)
-    5. Improvement plan
-    """
-    total = metrics.total_scenarios
-    success_count = round(metrics.success_rate * total)
-    failed_count = total - success_count
-
-    # ── Per-scenario rows ──────────────────────────────────────────────
-    scenario_rows = []
-    for s in metrics.scenario_metrics:
-        status = "✅" if s.success else "❌"
-        approval_flag = "✓" if s.approval_observed else "-"
-        scenario_rows.append(
-            f"| {s.scenario_id} "
-            f"| {s.expected_route} "
-            f"| {s.actual_route or 'N/A'} "
-            f"| {status} "
-            f"| {s.retry_count} "
-            f"| {s.interrupt_count} "
-            f"| {approval_flag} "
-            f"| {s.nodes_visited} |"
-        )
-    scenario_table = "\n".join(scenario_rows)
-
-    resume_evidence = (
-        "✅ Crash-resume verified"
-        if metrics.resume_success
-        else "MemorySaver used (no cross-process resume)"
-    )
-
-    report = f"""# Day 08 Lab Report — LangGraph Support-Ticket Agent
+# Day 08 Lab Report — LangGraph Support-Ticket Agent
 
 ## 1. Team / student
 
@@ -120,20 +70,26 @@ START → intake → classify → [route_after_classify]
 
 | Metric | Value |
 |---|---|
-| Total scenarios | {total} |
-| Successful | {success_count} |
-| Failed | {failed_count} |
-| Success rate | {metrics.success_rate:.1%} |
-| Avg nodes visited | {metrics.avg_nodes_visited:.1f} |
-| Total retries | {metrics.total_retries} |
-| Total interrupts | {metrics.total_interrupts} |
-| Crash-resume | {resume_evidence} |
+| Total scenarios | 7 |
+| Successful | 7 |
+| Failed | 0 |
+| Success rate | 100.0% |
+| Avg nodes visited | 6.6 |
+| Total retries | 4 |
+| Total interrupts | 2 |
+| Crash-resume | MemorySaver used (no cross-process resume) |
 
 **Per-scenario:**
 
 | Scenario | Expected | Actual | Success | Retries | Interrupts | Approval | Nodes |
 |---|---|---|---|---:|---:|:---:|---:|
-{scenario_table}
+| S01_simple | simple | simple | ✅ | 0 | 0 | - | 4 |
+| S02_tool | tool | tool | ✅ | 0 | 0 | - | 6 |
+| S03_missing | missing_info | missing_info | ✅ | 0 | 0 | - | 4 |
+| S04_risky | risky | risky | ✅ | 0 | 1 | ✓ | 8 |
+| S05_error | error | error | ✅ | 3 | 0 | - | 11 |
+| S06_delete | risky | risky | ✅ | 0 | 1 | ✓ | 8 |
+| S07_dead_letter | error | error | ✅ | 1 | 0 | - | 5 |
 
 ---
 
@@ -163,11 +119,11 @@ the LLM prompt also enforces the priority `risky > tool > missing_info > error >
 ## 6. Persistence / recovery evidence
 
 - **Checkpointer**: `MemorySaver` by default (configured in `configs/lab.yaml`).
-- **Thread ID**: Each scenario run uses `thread-{{scenario_id}}` as `thread_id`.
+- **Thread ID**: Each scenario run uses `thread-{scenario_id}` as `thread_id`.
 - **State history**: `graph.get_state_history(config)` returns all checkpoints per thread.
 - **Crash resume**: Switch to `checkpointer: sqlite` in `configs/lab.yaml`, then:
   ```python
-  graph.invoke(Command(resume=approval_decision), config={{"configurable": {{"thread_id": tid}}}})
+  graph.invoke(Command(resume=approval_decision), config={"configurable": {"thread_id": tid}})
   ```
 - **SQLite WAL mode**: Enables concurrent reads during long-running HITL pauses.
 
@@ -177,7 +133,7 @@ the LLM prompt also enforces the priority `risky > tool > missing_info > error >
 
 - **LLM-as-judge** in `evaluate_node`: LLM evaluates tool result quality beyond keyword heuristic.
 - **Real HITL**: `approval_node` uses `interrupt()` when `LANGGRAPH_INTERRUPT=true`.
-- **Idempotency key** in `tool_node`: `{{thread_id}}:attempt-{{n}}` prevents double side-effects on retry.
+- **Idempotency key** in `tool_node`: `{thread_id}:attempt-{n}` prevents double side-effects on retry.
 - **SQLite persistence**: `build_checkpointer("sqlite")` in `persistence.py` with WAL mode.
 - **Graph diagram**: Run `graph.get_graph().draw_mermaid()` to get Mermaid topology.
 
@@ -197,12 +153,3 @@ If given one more day, priority productionization steps:
    the user's follow-up, preserving full conversation history via checkpointer.
 5. **Parallel fan-out**: Use LangGraph `Send()` to run multiple tools concurrently when a
    single query requires cross-system lookups (order + account + shipping).
-"""
-    return report
-
-
-def write_report(metrics: MetricsReport, output_path: str | Path) -> None:
-    """Write the rendered report to a file."""
-    path = Path(output_path)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(render_report(metrics), encoding="utf-8")
