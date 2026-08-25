@@ -18,5 +18,8 @@ run-scenarios:
 grade-local:
 	python -m langgraph_agent_lab.cli validate-metrics --metrics outputs/metrics.json
 
+serve:
+	python -m langgraph_agent_lab.cli serve --host 127.0.0.1 --port 8000
+
 clean:
 	rm -rf .pytest_cache .ruff_cache .mypy_cache htmlcov dist build *.egg-info outputs/*.json

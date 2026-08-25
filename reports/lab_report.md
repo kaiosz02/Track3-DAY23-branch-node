@@ -74,22 +74,22 @@ START → intake → classify → [route_after_classify]
 | Successful | 7 |
 | Failed | 0 |
 | Success rate | 100.0% |
-| Avg nodes visited | 14.9 |
-| Total retries | 11 |
-| Total interrupts | 4 |
+| Avg nodes visited | 21.4 |
+| Total retries | 15 |
+| Total interrupts | 6 |
 | Crash-resume | MemorySaver used (no cross-process resume) |
 
 **Per-scenario:**
 
 | Scenario | Expected | Actual | Success | Retries | Interrupts | Approval | Nodes |
 |---|---|---|---|---:|---:|:---:|---:|
-| S01_simple | simple | simple | ✅ | 0 | 0 | - | 12 |
-| S02_tool | tool | tool | ✅ | 0 | 0 | - | 13 |
-| S03_missing | missing_info | missing_info | ✅ | 0 | 0 | - | 8 |
-| S04_risky | risky | risky | ✅ | 3 | 2 | ✓ | 23 |
-| S05_error | error | error | ✅ | 6 | 0 | - | 22 |
-| S06_delete | risky | risky | ✅ | 0 | 2 | ✓ | 16 |
-| S07_dead_letter | error | error | ✅ | 2 | 0 | - | 10 |
+| S01_simple | simple | simple | ✅ | 0 | 0 | - | 16 |
+| S02_tool | tool | tool | ✅ | 0 | 0 | - | 19 |
+| S03_missing | missing_info | missing_info | ✅ | 0 | 0 | - | 12 |
+| S04_risky | risky | risky | ✅ | 3 | 3 | ✓ | 31 |
+| S05_error | error | error | ✅ | 9 | 0 | - | 33 |
+| S06_delete | risky | risky | ✅ | 0 | 3 | ✓ | 24 |
+| S07_dead_letter | error | error | ✅ | 3 | 0 | - | 15 |
 
 ---
 

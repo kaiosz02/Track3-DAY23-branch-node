@@ -5,14 +5,14 @@ Students should extend the schema only when needed. Keep state lean and serializ
 
 from __future__ import annotations
 
-from enum import StrEnum
+from enum import Enum
 from operator import add
 from typing import Annotated, Any, TypedDict
 
 from pydantic import BaseModel, Field, field_validator
 
 
-class Route(StrEnum):
+class Route(str, Enum):
     SIMPLE = "simple"
     TOOL = "tool"
     MISSING_INFO = "missing_info"

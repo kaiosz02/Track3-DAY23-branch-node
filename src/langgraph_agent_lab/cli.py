@@ -67,5 +67,17 @@ def validate_metrics(metrics: Annotated[Path, typer.Option("--metrics")]) -> Non
     typer.echo(f"Metrics valid. success_rate={report.success_rate:.2%}")
 
 
+@app.command("serve")
+def serve(
+    host: Annotated[str, typer.Option("--host", help="Host IP to bind")] = "127.0.0.1",
+    port: Annotated[int, typer.Option("--port", help="Port to listen on")] = 8000,
+    reload: Annotated[bool, typer.Option("--reload", help="Enable hot reload")] = False,
+) -> None:
+    """Start the interactive demo web server."""
+    import uvicorn
+    typer.echo(f"Starting LangGraph Agent Lab Interactive Demo at http://{host}:{port}/")
+    uvicorn.run("langgraph_agent_lab.server:app", host=host, port=port, reload=reload)
+
+
 if __name__ == "__main__":
     app()
