@@ -26,7 +26,9 @@ def run_scenarios(
 ) -> None:
     """Run all grading scenarios and write metrics JSON."""
     import os
+
     from dotenv import load_dotenv
+
     load_dotenv()  # ensure .env is loaded before reading DATABASE_URL
 
     cfg = yaml.safe_load(config.read_text(encoding="utf-8"))
@@ -42,7 +44,12 @@ def run_scenarios(
         state = initial_state(scenario)
         run_config = {"configurable": {"thread_id": state["thread_id"]}}
         final_state = graph.invoke(state, config=run_config)
-        metrics.append(metric_from_state(final_state, scenario.expected_route.value, scenario.requires_approval))
+        metric = metric_from_state(
+            final_state,
+            scenario.expected_route.value,
+            scenario.requires_approval,
+        )
+        metrics.append(metric)
     report = summarize_metrics(metrics)
     write_metrics(report, output)
     if cfg.get("report_path"):

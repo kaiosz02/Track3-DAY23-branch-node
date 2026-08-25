@@ -34,6 +34,7 @@ def build_checkpointer(kind: str = "memory", database_url: str | None = None) ->
         # pip install langgraph-checkpoint-sqlite
         try:
             import sqlite3
+
             from langgraph.checkpoint.sqlite import SqliteSaver
         except ImportError as exc:
             raise RuntimeError(
@@ -55,8 +56,8 @@ def build_checkpointer(kind: str = "memory", database_url: str | None = None) ->
                 "Example: postgresql://user:pass@host:5432/dbname"
             )
         try:
-            from psycopg_pool import ConnectionPool
             from langgraph.checkpoint.postgres import PostgresSaver
+            from psycopg_pool import ConnectionPool
         except ImportError as exc:
             raise RuntimeError(
                 "Install Postgres checkpointer:\n"
@@ -76,7 +77,7 @@ def build_checkpointer(kind: str = "memory", database_url: str | None = None) ->
             kwargs={"autocommit": True, "connect_timeout": 10, "prepare_threshold": None},
         )
         pool.open(wait=True, timeout=15)   # fail fast if Supabase unreachable
-        checkpointer = PostgresSaver(pool)
+        checkpointer = PostgresSaver(pool)  # type: ignore[arg-type]
         # Creates checkpoint tables if they don't exist yet (idempotent)
         checkpointer.setup()
         return checkpointer

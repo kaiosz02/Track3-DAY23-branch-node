@@ -11,7 +11,7 @@ from typing import Any
 from .state import AgentState
 
 
-def build_graph(checkpointer: Any | None = None):
+def build_graph(checkpointer: Any | None = None) -> Any:
     """Build and compile the LangGraph workflow.
 
     Architecture:
@@ -34,6 +34,7 @@ def build_graph(checkpointer: Any | None = None):
         answer_node,
         approval_node,
         ask_clarification_node,
+        classify_node,
         dead_letter_node,
         evaluate_node,
         finalize_node,
@@ -41,7 +42,6 @@ def build_graph(checkpointer: Any | None = None):
         retry_or_fallback_node,
         risky_action_node,
         tool_node,
-        classify_node,
     )
     from .routing import (
         route_after_approval,

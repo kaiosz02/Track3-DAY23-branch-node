@@ -20,7 +20,11 @@ from langgraph_agent_lab.state import AgentState, Route, Scenario, initial_state
 
 
 def test_intake_node() -> None:
-    scenario = Scenario(id="test1", query="  How do I reset password?  ", expected_route=Route.SIMPLE)
+    scenario = Scenario(
+        id="test1",
+        query="  How do I reset password?  ",
+        expected_route=Route.SIMPLE,
+    )
     state = initial_state(scenario)
     result = intake_node(state)
     assert result["query"] == "How do I reset password?"

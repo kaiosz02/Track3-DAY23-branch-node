@@ -46,8 +46,9 @@ def get_llm(model: str | None = None, temperature: float = 0.0) -> BaseChatModel
             from langchain_openai import ChatOpenAI
         except ImportError as exc:
             raise RuntimeError("Install: pip install langchain-openai") from exc
+        openai_model: str = model or os.getenv("LLM_MODEL") or "gpt-4o-mini"
         return ChatOpenAI(
-            model=model or os.getenv("LLM_MODEL", "gpt-4o-mini"),
+            model=openai_model,
             temperature=temperature,
         )
 
@@ -56,8 +57,9 @@ def get_llm(model: str | None = None, temperature: float = 0.0) -> BaseChatModel
             from langchain_anthropic import ChatAnthropic
         except ImportError as exc:
             raise RuntimeError("Install: pip install langchain-anthropic") from exc
-        return ChatAnthropic(
-            model=model or os.getenv("LLM_MODEL", "claude-sonnet-4-20250514"),
+        anthropic_model: str = model or os.getenv("LLM_MODEL") or "claude-sonnet-4-20250514"
+        return ChatAnthropic(  # type: ignore[call-arg]
+            model_name=anthropic_model,
             temperature=temperature,
         )
 

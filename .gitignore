@@ -22,6 +22,10 @@ env/
 .env
 
 # Persistence
+checkpoints/
+*.db
+*.db-wal
+*.db-shm
 checkpoints.db
 checkpoints.db-wal
 checkpoints.db-shm

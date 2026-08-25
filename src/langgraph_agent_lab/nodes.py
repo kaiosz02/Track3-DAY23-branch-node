@@ -14,7 +14,7 @@ from __future__ import annotations
 import os
 import time
 import uuid
-from typing import Literal
+from typing import Literal, cast
 
 from pydantic import BaseModel, Field
 
@@ -154,7 +154,7 @@ def classify_node(state: AgentState) -> dict:
         {"role": "user", "content": f"Customer Ticket Query: {query}"},
     ]
 
-    result: ClassificationResult = structured_llm.invoke(messages)
+    result = cast(ClassificationResult, structured_llm.invoke(messages))
     route = result.route
     risk_level = "high" if route == "risky" or result.risk_level == "high" else "low"
 
@@ -200,7 +200,7 @@ def tool_node(state: AgentState) -> dict:
         if route == "error" and attempt < 2:
             # Simulate transient timeout for error-route scenarios
             raise TimeoutError(
-                f"timeout: Service timeout while processing request '{query}' (attempt {attempt + 1})"
+                f"timeout: Service timeout for request '{query}' (attempt {attempt + 1})"
             )
 
         # Use frozen approved action args if available (risky flow)
@@ -290,7 +290,7 @@ def evaluate_node(state: AgentState) -> dict:
                 f"Tool Output: {latest_result}\n\n"
                 "Evaluate whether this tool execution succeeded or requires retry."
             )
-            verdict: EvaluationResult = judge.invoke(prompt)
+            verdict = cast(EvaluationResult, judge.invoke(prompt))
             eval_result = "success" if verdict.is_satisfactory else "needs_retry"
         except Exception:  # noqa: BLE001
             eval_result = "success"  # assume success if LLM judge fails
@@ -476,7 +476,10 @@ def retry_or_fallback_node(state: AgentState) -> dict:
     if backoff_delay > 0 and os.getenv("DISABLE_BACKOFF", "").lower() != "true":
         time.sleep(backoff_delay)
 
-    err_msg = f"Attempt {new_attempt} failed [{error_type}]: transient error, retrying in {backoff_delay:.1f}s"
+    err_msg = (
+        f"Attempt {new_attempt} failed [{error_type}]: "
+        f"transient error, retrying in {backoff_delay:.1f}s"
+    )
 
     return {
         "attempt": new_attempt,

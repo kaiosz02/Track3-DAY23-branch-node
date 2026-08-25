@@ -80,10 +80,10 @@ START → intake → classify → [route_after_classify]
 **Key design decisions:**
 
 - `intake_node` normalizes raw input before any LLM call.
-- `classify_node` uses `llm.with_structured_output(ClassificationResult)` for reliable enum output.
-- A deterministic `RISKY_KEYWORDS` safety net overrides LLM classification to prevent bypassing HITL.
-- `tool_node` wraps all execution in try/except and stores exceptions in `tool_error` — graph never
-  crashes before `finalize_node`.
+- `classify_node` uses `llm.with_structured_output(ClassificationResult)`.
+- A deterministic `RISKY_KEYWORDS` safety net overrides LLM to protect HITL.
+- `tool_node` wraps execution in try/except and stores exceptions in `tool_error`.
+  Graph never crashes before `finalize_node`.
 - `evaluate_node` checks `tool_error` first, then heuristic, then LLM-as-judge.
 - Bounded retry: `route_after_retry` checks `attempt < max_attempts` before looping.
 - `approval_node` supports real HITL via `interrupt()` when `LANGGRAPH_INTERRUPT=true`.
@@ -145,8 +145,8 @@ START → intake → classify → [route_after_classify]
 skipping `finalize_node` and losing the audit trail. The scenario metric has no `final_answer`.
 
 **Solution implemented:** All tool calls are wrapped in `try/except`. Exceptions are stored
-in `tool_error` and returned as a state update. `evaluate_node` reads `tool_error` first
-and routes to `retry`. Dead letter fires after `max_attempts`, ensuring `finalize` is always reached.
+in `tool_error` and returned as state update. `evaluate_node` reads `tool_error` first
+and routes to `retry`. Dead letter fires after `max_attempts`, ensuring `finalize` is reached.
 
 ### Failure mode 2 — Risky action bypasses HITL approval
 
@@ -175,9 +175,9 @@ the LLM prompt also enforces the priority `risky > tool > missing_info > error >
 
 ## 7. Extension work
 
-- **LLM-as-judge** in `evaluate_node`: LLM evaluates tool result quality beyond keyword heuristic.
+- **LLM-as-judge** in `evaluate_node`: LLM evaluates tool result quality beyond heuristics.
 - **Real HITL**: `approval_node` uses `interrupt()` when `LANGGRAPH_INTERRUPT=true`.
-- **Idempotency key** in `tool_node`: `{{thread_id}}:attempt-{{n}}` prevents double side-effects on retry.
+- **Idempotency key** in `tool_node`: `{{thread_id}}:attempt-{{n}}` prevents duplicate side-effects.
 - **SQLite persistence**: `build_checkpointer("sqlite")` in `persistence.py` with WAL mode.
 - **Graph diagram**: Run `graph.get_graph().draw_mermaid()` to get Mermaid topology.
 
